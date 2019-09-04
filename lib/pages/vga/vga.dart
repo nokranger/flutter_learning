@@ -14,6 +14,17 @@ class VgaPage extends StatefulWidget {
 
 class _VgaPageState extends State<VgaPage> {
   List<Vga> vgas = [];
+
+  String sortBy = 'latest'; //lates  low2high high2low
+  BuildContext _scaffoldContext;
+  String sortsby = 'Latest';
+  final List<String> _dropdownValues = [
+    'Latest',
+    'Low to high',
+    'High to low',
+  ];
+  String _currentlySelected = '';
+  final List<String> _iconss = ['settings', 'settings', 'settings'];
   @override
   void initState() {
     // TODO: implement initState
@@ -29,48 +40,149 @@ class _VgaPageState extends State<VgaPage> {
     setState(() {
       jsonString.forEach((v) {
         final vga = Vga.fromJson(v);
-        if(vga.advId != '') vgas.add(vga);
+        if (vga.advId != '' && vga.vgaPriceAdv != 0) vgas.add(vga);
       });
     });
+  }
+
+  sortAction() {
+    setState(() {
+      if (sortBy == 'latest') {
+        sortBy = 'low2high';
+        vgas.sort((a, b) {
+          return a.vgaPriceAdv - b.vgaPriceAdv;
+        });
+      } else if (sortBy == 'low2high') {
+        sortBy = 'high2low';
+        vgas.sort((a, b) {
+          return b.vgaPriceAdv - a.vgaPriceAdv;
+        });
+      } else {
+        sortBy = 'latest';
+        vgas.sort((a, b) {
+          return b.id - a.id;
+        });
+      }
+    });
+  }
+
+  showMessage(String txt) {
+    Scaffold.of(_scaffoldContext).showSnackBar(SnackBar(
+      content: Text(txt),
+      duration: Duration(seconds: 1),
+    ));
+  }
+
+  Widget dropdownWidget() {
+    return DropdownButton(
+      //map each value from the lIst to our dropdownMenuItem widget
+      items: _dropdownValues
+          .map((value) => DropdownMenuItem(
+                child: Row(
+                  children: <Widget>[
+                    Icon(Icons.sort_by_alpha),
+                    Text('    '+value),
+                  ]
+                ),
+                value: value,
+              ))
+          .toList(),
+      onChanged: (String value) {
+        //once dropdown changes, update the state of out currentValue
+        setState(() {
+          _currentlySelected = value;
+          if (_currentlySelected == 'Latest') {
+            _currentlySelected = value;
+            print(_currentlySelected);
+            vgas.sort((a, b) {
+              return b.id - a.id;
+            });
+          } else if (_currentlySelected == 'Low to high') {
+            _currentlySelected = value;
+            print(_currentlySelected);
+            vgas.sort((a, b) {
+              return a.vgaPriceAdv - b.vgaPriceAdv;
+            });
+          } else if (_currentlySelected == 'High to low') {
+            _currentlySelected = value;
+            print(_currentlySelected);
+            vgas.sort((a, b) {
+              return b.vgaPriceAdv - a.vgaPriceAdv;
+            });
+          }
+        });
+      },
+      //this wont make dropdown expanded and fill the horizontal space
+      isExpanded: false,
+      //make default value of dropdown the first value of our list
+      value: _dropdownValues.firstWhere((s) => s.startsWith(_currentlySelected),
+          orElse: () => ''),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('PC Build'),
-      ),
-      body: ListView.builder(
-        itemCount: vgas.length,
-        itemBuilder: (context, i) {
-          return GestureDetector(
-              onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => VgaDetailPage(),
-                  )),
-              child: Row(
-                children: <Widget>[
-                  Container(
-                    height: 150,
-                    width: 150,
-                    child: CachedNetworkImage(
-                      imageUrl: "https://www.advice.co.th/pic-pc/vga/${vgas[i].vgaPicture}",
-                      // placeholder: (context, url) =>
-                      //     CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
-                    ),
+        appBar: AppBar(
+          title: Text('PC Build'),
+          actions: <Widget>[
+            // IconButton(
+            //   icon: Icon(Icons.sort),
+            //   tooltip: 'Retitch it',
+            //   onPressed: () {
+            //     sortAction();
+            //     showMessage(sortBy);
+            //   },
+            // )
+            dropdownWidget(),
+          ],
+        ),
+        body: Builder(
+          builder: (context) {
+            _scaffoldContext = context;
+            return bodyBuilder();
+          },
+        ));
+    // body: Builder(builder: (_currentlySelected) {
+    //   _scaffoldContext = _currentlySelected;
+    //   return bodyBuilder();
+    // }));
+  }
+
+  Widget bodyBuilder() {
+    return ListView.builder(
+      itemCount: vgas.length,
+      itemBuilder: (context, i) {
+        var v = vgas[i];
+        return GestureDetector(
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VgaDetailPage(),
+                )),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  height: 150,
+                  width: 150,
+                  child: CachedNetworkImage(
+                    imageUrl:
+                        "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
+                    // placeholder: (context, url) =>
+                    //     CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
                   ),
-                  Column(
-                    children: <Widget>[
-                      Text('${vgas[i].vgaModel}'),
-                      Text('${vgas[i].vgaBrand}'),
-                    ],
-                  ),
-                ],
-              ));
-        },
-      ),
+                ),
+                Column(
+                  children: <Widget>[
+                    Text('${v.vgaModel}'),
+                    Text('${v.vgaBrand}'),
+                    Text('${v.vgaPriceAdv} บาท')
+                  ],
+                ),
+              ],
+            ));
+      },
     );
   }
 }
