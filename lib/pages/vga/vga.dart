@@ -19,7 +19,7 @@ class _VgaPageState extends State<VgaPage> {
   String sortBy = 'latest'; //lates  low2high high2low
   BuildContext _scaffoldContext; //snackbar
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  VgaFilter vgafilter = VgaFilter();
+  VgaFilter vgaFilter = VgaFilter();
   String sortsby = 'Latest';
   final List<String> _dropdownValues = [
     'Latest',
@@ -144,8 +144,14 @@ class _VgaPageState extends State<VgaPage> {
             icon: Icon(Icons.tune),
             tooltip: 'Filter',
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => VgaFilterPage()));
+              // vgaFilter.vgaBrands = ['ASUS'];
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => VgaFilterPage(
+              //               vgaFilter: vgaFilter,
+              //             )));
+              navigate2filterPage(context);
             },
           ),
           dropdownWidget(),
@@ -153,6 +159,18 @@ class _VgaPageState extends State<VgaPage> {
       ),
       body: bodyBuilder(),
     );
+  }
+
+  navigate2filterPage(BuildContext context) async{
+    vgaFilter.vgaBrands = ['ASUS'];
+    VgaFilter result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => VgaFilterPage(
+                  vgaFilter: vgaFilter,
+                )));
+    print('out');
+    print(result.vgaBrands);
   }
 
   Widget bodyBuilder() {
