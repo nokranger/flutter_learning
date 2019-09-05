@@ -4,8 +4,9 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_cache_store/flutter_cache_store.dart';
 
-import 'package:pc_build/pages/vga/vga-detail.dart';
+import 'package:pc_build/pages/vga/vga_detail.dart';
 import 'package:pc_build/models/vga.dart';
+import 'package:pc_build/pages/vga/vga_filter.dart';
 
 class VgaPage extends StatefulWidget {
   @override
@@ -16,7 +17,9 @@ class _VgaPageState extends State<VgaPage> {
   List<Vga> vgas = [];
 
   String sortBy = 'latest'; //lates  low2high high2low
-  BuildContext _scaffoldContext;
+  BuildContext _scaffoldContext; //snackbar
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  VgaFilter vgafilter = VgaFilter();
   String sortsby = 'Latest';
   final List<String> _dropdownValues = [
     'Latest',
@@ -67,7 +70,11 @@ class _VgaPageState extends State<VgaPage> {
   }
 
   showMessage(String txt) {
-    Scaffold.of(_scaffoldContext).showSnackBar(SnackBar(
+    // Scaffold.of(_scaffoldContext).showSnackBar(SnackBar(
+    //   content: Text(txt),
+    //   duration: Duration(seconds: 1),
+    // ));
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
       content: Text(txt),
       duration: Duration(seconds: 1),
     ));
@@ -78,12 +85,10 @@ class _VgaPageState extends State<VgaPage> {
       //map each value from the lIst to our dropdownMenuItem widget
       items: _dropdownValues
           .map((value) => DropdownMenuItem(
-                child: Row(
-                  children: <Widget>[
-                    Icon(Icons.sort_by_alpha),
-                    Text('    '+value),
-                  ]
-                ),
+                child: Row(children: <Widget>[
+                  Icon(Icons.sort_by_alpha),
+                  Text('    ' + value),
+                ]),
                 value: value,
               ))
           .toList(),
@@ -123,30 +128,31 @@ class _VgaPageState extends State<VgaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text('PC Build'),
-          actions: <Widget>[
-            // IconButton(
-            //   icon: Icon(Icons.sort),
-            //   tooltip: 'Retitch it',
-            //   onPressed: () {
-            //     sortAction();
-            //     showMessage(sortBy);
-            //   },
-            // )
-            dropdownWidget(),
-          ],
-        ),
-        body: Builder(
-          builder: (context) {
-            _scaffoldContext = context;
-            return bodyBuilder();
-          },
-        ));
-    // body: Builder(builder: (_currentlySelected) {
-    //   _scaffoldContext = _currentlySelected;
-    //   return bodyBuilder();
-    // }));
+      appBar: AppBar(
+        key: _scaffoldKey,
+        title: Text('PC Build'),
+        actions: <Widget>[
+          // IconButton(
+          //   icon: Icon(Icons.sort),
+          //   tooltip: 'Retitch it',
+          //   onPressed: () {
+          //     sortAction();
+          //     showMessage(sortBy);
+          //   },
+          // )
+          IconButton(
+            icon: Icon(Icons.tune),
+            tooltip: 'Filter',
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => VgaFilterPage()));
+            },
+          ),
+          dropdownWidget(),
+        ],
+      ),
+      body: bodyBuilder(),
+    );
   }
 
   Widget bodyBuilder() {
@@ -163,6 +169,7 @@ class _VgaPageState extends State<VgaPage> {
             child: Row(
               children: <Widget>[
                 Container(
+                  margin: EdgeInsets.all(8),
                   height: 150,
                   width: 150,
                   child: CachedNetworkImage(
