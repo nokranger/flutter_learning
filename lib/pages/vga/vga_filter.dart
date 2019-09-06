@@ -26,8 +26,8 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
             child: Text('Back'),
             onPressed: () {
               print('in');
-              print(filter.vgaBrands);
-              filter.vgaBrands = ['GIGABYTE'];
+              // print(filter.vgaBrands);
+              // filter.vgaBrands = ['GIGABYTE'];
               Navigator.pop(context, filter);
             }),
       ),
