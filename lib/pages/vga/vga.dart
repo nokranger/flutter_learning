@@ -22,6 +22,8 @@ class _VgaPageState extends State<VgaPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   VgaFilter vgaFilter = VgaFilter();
   String sortsby = 'Latest';
+  VgaFilter selectedFilter = VgaFilter();
+  VgaFilter allFilter = VgaFilter();
   final List<String> _dropdownValues = [
     'Latest',
     'Low to high',
@@ -63,27 +65,14 @@ class _VgaPageState extends State<VgaPage> {
           allVgas.add(vga);
         }
       });
-      vgaFilter.allBrands = allVgas.map((v) => v.vgaBrand).toSet();
-      vgaFilter.selectedBrands = allVgas.map((v) => v.vgaBrand).toSet();
+      allFilter = VgaFilter.fromVgas(allVgas);
+      // selectedFilter = VgaFilter.fromVgas(allVgas);
     });
     filterAction();
   }
 
   filterAction() {
-    setState(() {
-      // vgaFilter.allBrands = allVgas.map((v) => v.vgaBrand).toSet();
-      // vgaFilter.selectedBrands = allVgas.map((v) => v.vgaBrand).toSet();
-      // Set<String> selectedBrands;
-      // print(vgaFilter.allBrands.toList()..sort());
-      filteredVgas.clear();
-      // vgaFilter.selectedBrands.remove('GIGABYTE');
-      allVgas.forEach((v) {
-        if (vgaFilter.selectedBrands.contains(v.vgaBrand)) {
-          filteredVgas.add(v);
-          // print(allVgas);
-        }
-      });
-    });
+    filteredVgas = selectedFilter.filters(allVgas);
   }
 
   sortAction() {
@@ -213,16 +202,17 @@ class _VgaPageState extends State<VgaPage> {
         context,
         MaterialPageRoute(
             builder: (context) => VgaFilterPage(
-                  vgaFilter: vgaFilter,
+                  allFilter: allFilter,
+                  selectedFilter: selectedFilter,
                 )));
     // print('out');
     // print(result.selectedBrands);
     if (result != null) {
       setState(() {
-        vgaFilter.selectedBrands = result.selectedBrands;
+        selectedFilter = result;
       });
       filterAction();
-    }else {
+    } else {
       filterAction();
     }
   }
@@ -241,11 +231,12 @@ class _VgaPageState extends State<VgaPage> {
                     builder: (context) => VgaDetailPage(),
                   )),
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
                   Container(
                     margin: EdgeInsets.all(8),
-                    height: 150,
-                    width: 150,
+                    height: 100,
+                    width: 100,
                     child: CachedNetworkImage(
                       imageUrl:
                           "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
@@ -254,12 +245,15 @@ class _VgaPageState extends State<VgaPage> {
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                   ),
-                  Column(
-                    children: <Widget>[
-                      Text('${v.vgaModel}'),
-                      Text('${v.vgaBrand}'),
-                      Text('${v.vgaPriceAdv} บาท')
-                    ],
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    child: Column(
+                      children: <Widget>[
+                        Text('${v.vgaModel}'),
+                        Text('${v.vgaBrand}'),
+                        Text('${v.vgaPriceAdv} บาท')
+                      ],
+                    ),
                   ),
                 ],
               )),

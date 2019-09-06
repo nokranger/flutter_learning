@@ -2,86 +2,112 @@ import 'package:flutter/material.dart';
 import 'package:pc_build/models/vga.dart';
 
 class VgaFilterPage extends StatefulWidget {
-  final VgaFilter vgaFilter;
+  final VgaFilter allFilter;
+  final VgaFilter selectedFilter;
 
-  VgaFilterPage({Key key, this.vgaFilter}) : super(key: key);
+  VgaFilterPage({Key key, this.allFilter, this.selectedFilter})
+      : super(key: key);
+
   @override
   _VgaFilterPageState createState() => _VgaFilterPageState();
 }
 
 class _VgaFilterPageState extends State<VgaFilterPage> {
-  VgaFilter filter;
+  VgaFilter allFilter;
+  VgaFilter selectedFilter;
+
   @override
   void initState() {
     super.initState();
-    // print('in');
-    // print(widget.vgaFilter.selectedBrands);
-    filter = widget.vgaFilter;
+    allFilter = widget.allFilter;
+    selectedFilter = widget.selectedFilter;
   }
 
   @override
   Widget build(BuildContext context) {
-    List<String> brandList = filter.allBrands.toList()..sort();
+    // List<String> allBrandList = allFilter.vgaBrand.toList()..sort();
     return Scaffold(
-        appBar: AppBar(
-          title: Text('Filter Page'),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(Icons.check),
-              tooltip: 'OK',
-              onPressed: () {
-                Navigator.pop(context, filter);
-              },
-            )
-          ],
-        ),
-        body: ListView(
-          children: <Widget>[
-            ListTile(
-              title: Text('Brands'),
-              trailing: brandList.length == filter.selectedBrands.length
-                  ? FlatButton(
-                      child: Text('Unselect all'),
-                      onPressed: () {
-                        setState(() {
-                          filter.selectedBrands.clear();
-                        });
-                      },
-                    )
-                  : FlatButton(
-                      child: Text('Select all'),
-                      onPressed: () {
-                        setState(() {
-                          brandList
-                              .forEach((b) => filter.selectedBrands.add(b));
-                        });
-                      },
-                    ),
-            ),
-            Wrap(
-              children: brandList.map((b) => filterChipMaker(b)).toList(),
-            )
-          ],
-        ));
+      appBar: AppBar(
+        title: Text('Filter'),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.check),
+            tooltip: 'OK',
+            onPressed: () {
+              Navigator.pop(context, selectedFilter);
+            },
+          ),
+        ],
+      ),
+      body: ListView(
+        children: <Widget>[
+          ListTile(
+            title: Text('Brands'),
+            trailing:
+                selectAllMaker(allFilter.vgaBrand, selectedFilter.vgaBrand),
+          ),
+          filterChipMaker(allFilter.vgaBrand, selectedFilter.vgaBrand),
+          ListTile(
+            title: Text('vgaChipset'),
+            trailing:
+                selectAllMaker(allFilter.vgaChipset, selectedFilter.vgaChipset),
+          ),
+          filterChipMaker(allFilter.vgaChipset, selectedFilter.vgaChipset),
+          ListTile(
+            title: Text('vgaSeries'),
+            trailing:
+                selectAllMaker(allFilter.vgaSeries, selectedFilter.vgaSeries),
+          ),
+          filterChipMaker(allFilter.vgaSeries, selectedFilter.vgaSeries),
+        ],
+      ),
+    );
   }
 
-  Widget filterChipMaker(String b) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(2, 0, 2, 0),
-      child: FilterChip(
-        avatar: Text(' '),
-        label: Text(b),
-        selected: filter.selectedBrands.contains(b),
-        onSelected: (bool sel) {
+  Widget selectAllMaker(Set<String> all, Set<String> selected) {
+    if (all.length == selected.length)
+      return FlatButton(
+        child: Text('clear all'),
+        onPressed: () {
           setState(() {
-            if (sel) {
-              filter.selectedBrands.add(b);
-            } else {
-              filter.selectedBrands.remove(b);
-            }
+            selected.clear();
           });
         },
-      ),
+      );
+    else
+      return FlatButton(
+        child: Text('select all'),
+        onPressed: () {
+          setState(() {
+            selected.addAll(all);
+          });
+        },
+      );
+  }
+
+  Widget filterChipMaker(Set<String> all, Set<String> s) {
+    Widget internalMaker(String b) {
+      return Container(
+        margin: EdgeInsets.fromLTRB(2, 0, 2, 0),
+        child: FilterChip(
+          avatar: Text(' '),
+          label: Text(b),
+          selected: s.contains(b),
+          onSelected: (bool sel) {
+            setState(() {
+              if (sel)
+                s.add(b);
+              else
+                s.remove(b);
+            });
+          },
+        ),
+      );
+    }
+
+    List<String> allList = all.toList()..sort();
+    return Wrap(
+      children: allList.map((b) => internalMaker(b)).toList(),
     );
   }
 }
