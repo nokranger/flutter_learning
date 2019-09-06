@@ -22,8 +22,9 @@ class _VgaPageState extends State<VgaPage> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   VgaFilter vgaFilter = VgaFilter();
   String sortsby = 'Latest';
-  VgaFilter selectedFilter = VgaFilter();
-  VgaFilter allFilter = VgaFilter();
+  // VgaFilter selectedFilter = VgaFilter();
+  // VgaFilter allFilter = VgaFilter();
+  VgaFilter filter = VgaFilter();
   final List<String> _dropdownValues = [
     'Latest',
     'Low to high',
@@ -65,14 +66,14 @@ class _VgaPageState extends State<VgaPage> {
           allVgas.add(vga);
         }
       });
-      allFilter = VgaFilter.fromVgas(allVgas);
+      // allFilter = VgaFilter.fromVgas(allVgas);
       // selectedFilter = VgaFilter.fromVgas(allVgas);
     });
     filterAction();
   }
 
   filterAction() {
-    filteredVgas = selectedFilter.filters(allVgas);
+    filteredVgas = filter.filters(allVgas);
   }
 
   sortAction() {
@@ -167,13 +168,13 @@ class _VgaPageState extends State<VgaPage> {
           //     showMessage(sortBy);
           //   },
           // )
-          IconButton(
-            icon: Icon(Icons.refresh),
-            tooltip: 'Refresh',
-            onPressed: () {
-              filterAction();
-            },
-          ),
+          // IconButton(
+          //   icon: Icon(Icons.refresh),
+          //   tooltip: 'Refresh',
+          //   onPressed: () {
+          //     filterAction();
+          //   },
+          // ),
           // dropdownWidget(),
           IconButton(
             icon: Icon(Icons.tune),
@@ -202,14 +203,14 @@ class _VgaPageState extends State<VgaPage> {
         context,
         MaterialPageRoute(
             builder: (context) => VgaFilterPage(
-                  allFilter: allFilter,
-                  selectedFilter: selectedFilter,
+                  selectedFilter: filter,
+                  allVgas: allVgas
                 )));
     // print('out');
     // print(result.selectedBrands);
     if (result != null) {
       setState(() {
-        selectedFilter = result;
+        filter = result;
       });
       filterAction();
     } else {
