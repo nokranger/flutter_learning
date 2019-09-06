@@ -28,7 +28,10 @@ class _VgaPageState extends State<VgaPage> {
   // BuildContext _scaffoldContext; //snackbar
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   VgaFilter vgaFilter = VgaFilter();
-  String sortsby = 'Latest';
+  TextEditingController searchController = new TextEditingController();
+  String searchString = '';
+  String lastSearchString = '';
+  bool showSearch = false;
   // VgaFilter selectedFilter = VgaFilter();
   // VgaFilter allFilter = VgaFilter();
   VgaFilter filter = VgaFilter();
@@ -56,8 +59,22 @@ class _VgaPageState extends State<VgaPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    searchController.addListener(searchListener);
     loadData();
     // doFilter();
+  }
+
+  searchListener() {
+    setState(() {
+      if (searchController.text != null) {
+        if (searchController.text.length > 2) {
+          searchString = searchController.text;
+        } else {
+          searchString = '';
+        }
+        doFilter();
+      }
+    });
   }
 
   loadData() async {
@@ -80,6 +97,14 @@ class _VgaPageState extends State<VgaPage> {
   doFilter() {
     setState(() {
       filteredVgas = filter.filters(allVgas);
+      if (searchString != '')
+        filteredVgas = filteredVgas.where((v) {
+          if (v.vgaBrand.toLowerCase().contains(searchString.toLowerCase()))
+            return true;
+          if (v.vgaModel.toLowerCase().contains(searchString.toLowerCase()))
+            return true;
+          return false;
+        }).toList();
     });
   }
 
@@ -160,53 +185,72 @@ class _VgaPageState extends State<VgaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        key: _scaffoldKey,
-        title: Text('PC Build'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.tune),
-            tooltip: 'Filter',
-            onPressed: () {
-              // vgaFilter.vgaBrands = ['ASUS'];
-              // Navigator.push(
-              //     context,
-              //     MaterialPageRoute(
-              //         builder: (context) => VgaFilterPage(
-              //               vgaFilter: vgaFilter,
-              //             )));
-              navigate2filterPage(context);
-            },
-          ),
-          // dropdownWidget(),
-          PopupMenuButton(
-            onSelected: (v) => doSort(v),
-            // icon: Icon(Icons.sort),
-            icon: sort == Sort.highPrice
-                ? Icon(Icons.arrow_upward)
-                : sort == Sort.lowPrice
-                    ? Icon(Icons.arrow_downward)
-                    : Icon(Icons.sort),
-            itemBuilder: (context) {
-              return [
-                PopupMenuItem(
-                  child: Text('Latest'),
-                  value: Sort.latest,
-                ),
-                PopupMenuItem(
-                  child: Text('Low price'),
-                  value: Sort.lowPrice,
-                ),
-                PopupMenuItem(
-                  child: Text('High price'),
-                  value: Sort.highPrice,
-                ),
-              ];
-            },
-          ),
-        ],
-      ),
+      appBar: appBarBuilder(context),
       body: bodyBuilder(),
+    );
+  }
+
+  AppBar appBarBuilder(BuildContext context) {
+    return AppBar(
+      key: _scaffoldKey,
+      title: Text('PC Build'),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.search),
+          tooltip: 'Serach',
+          onPressed: () {
+            setState(() {
+             showSearch =! showSearch;
+             if(!showSearch){
+               lastSearchString = searchString;
+               searchController.clear();
+             } else {
+               searchController.text = lastSearchString;
+             }
+            });
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.tune),
+          tooltip: 'Filter',
+          onPressed: () {
+            // vgaFilter.vgaBrands = ['ASUS'];
+            // Navigator.push(
+            //     context,
+            //     MaterialPageRoute(
+            //         builder: (context) => VgaFilterPage(
+            //               vgaFilter: vgaFilter,
+            //             )));
+            navigate2filterPage(context);
+          },
+        ),
+        // dropdownWidget(),
+        PopupMenuButton(
+          onSelected: (v) => doSort(v),
+          // icon: Icon(Icons.sort),
+          icon: sort == Sort.highPrice
+              ? Icon(Icons.arrow_upward)
+              : sort == Sort.lowPrice
+                  ? Icon(Icons.arrow_downward)
+                  : Icon(Icons.sort),
+          itemBuilder: (context) {
+            return [
+              PopupMenuItem(
+                child: Text('Latest'),
+                value: Sort.latest,
+              ),
+              PopupMenuItem(
+                child: Text('Low price'),
+                value: Sort.lowPrice,
+              ),
+              PopupMenuItem(
+                child: Text('High price'),
+                value: Sort.highPrice,
+              ),
+            ];
+          },
+        ),
+      ],
     );
   }
 
@@ -223,18 +267,35 @@ class _VgaPageState extends State<VgaPage> {
       setState(() {
         filter = result;
       });
-       doFilter();
+      doFilter();
     }
   }
 
   Widget bodyBuilder() {
+    return Column(
+      children: <Widget>[
+        showSearch
+            ? TextField(
+                decoration: InputDecoration(labelText: 'Search'),
+                controller: searchController,
+              )
+            : SizedBox(),
+        Expanded(
+          child: listBuilder(),
+        ),
+      ],
+    );
+  }
+
+  Widget listBuilder() {
     return ListView.builder(
       itemCount: filteredVgas.length,
       itemBuilder: (context, i) {
         var v = filteredVgas[i];
         return Card(
           elevation: 0,
-          child: InkWell(
+          child: Container(
+            child: InkWell(
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -244,11 +305,9 @@ class _VgaPageState extends State<VgaPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
                   Container(
-                    margin: EdgeInsets.all(8),
                     height: 100,
                     width: 100,
                     child: CachedNetworkImage(
-                      fit: BoxFit.cover,
                       imageUrl:
                           "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
                       // placeholder: (context, url) =>
@@ -256,41 +315,23 @@ class _VgaPageState extends State<VgaPage> {
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      children: <Widget>[
-                        SizedBox(
-                            width: 200.0,
-                            child: Text(
-                              'รุ่น : ${v.vgaModel}',
-                              style: TextStyle(fontSize: 15),
-                            )),
-                        SizedBox(
-                            width: 200.0,
-                            child: Text(
-                              'ยี่ห้อ : ${v.vgaBrand}',
-                              style: TextStyle(fontSize: 15),
-                            )),
-                        SizedBox(
-                            width: 200.0,
-                            child: Text(
-                              'ราคา : ${v.vgaPriceAdv} บาท',
-                              style: TextStyle(fontSize: 15),
-                            )),
-                        // Text(
-                        //   '${v.vgaBrand}',
-                        //   style: TextStyle(fontSize: 15),
-                        // ),
-                        // Text(
-                        //   '${v.vgaPriceAdv} บาท',
-                        //   style: TextStyle(fontSize: 15),
-                        // )
-                      ],
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text('ยี่ห้อ : ${v.vgaBrand}'),
+                          Text('รุ่น : ${v.vgaModel}'),
+                          Text('ราคา : ${v.vgaPriceAdv} บาท'),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              )),
+              ),
+            ),
+          ),
         );
       },
     );
