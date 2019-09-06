@@ -14,22 +14,73 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
   @override
   void initState() {
     super.initState();
-    // print(widget.vgaFilter.vgaBrands);
+    // print('in');
+    // print(widget.vgaFilter.selectedBrands);
     filter = widget.vgaFilter;
   }
 
   @override
   Widget build(BuildContext context) {
+    List<String> brandList = filter.allBrands.toList()..sort();
     return Scaffold(
-      body: Center(
-        child: RaisedButton(
-            child: Text('Back'),
-            onPressed: () {
-              print('in');
-              // print(filter.vgaBrands);
-              // filter.vgaBrands = ['GIGABYTE'];
-              Navigator.pop(context, filter);
-            }),
+        appBar: AppBar(
+          title: Text('Filter Page'),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.check),
+              tooltip: 'OK',
+              onPressed: () {
+                Navigator.pop(context, filter);
+              },
+            )
+          ],
+        ),
+        body: ListView(
+          children: <Widget>[
+            ListTile(
+              title: Text('Brands'),
+              trailing: brandList.length == filter.selectedBrands.length
+                  ? FlatButton(
+                      child: Text('Unselect all'),
+                      onPressed: () {
+                        setState(() {
+                          filter.selectedBrands.clear();
+                        });
+                      },
+                    )
+                  : FlatButton(
+                      child: Text('Select all'),
+                      onPressed: () {
+                        setState(() {
+                          brandList
+                              .forEach((b) => filter.selectedBrands.add(b));
+                        });
+                      },
+                    ),
+            ),
+            Wrap(
+              children: brandList.map((b) => filterChipMaker(b)).toList(),
+            )
+          ],
+        ));
+  }
+
+  Widget filterChipMaker(String b) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(2, 0, 2, 0),
+      child: FilterChip(
+        avatar: Text(' '),
+        label: Text(b),
+        selected: filter.selectedBrands.contains(b),
+        onSelected: (bool sel) {
+          setState(() {
+            if (sel) {
+              filter.selectedBrands.add(b);
+            } else {
+              filter.selectedBrands.remove(b);
+            }
+          });
+        },
       ),
     );
   }

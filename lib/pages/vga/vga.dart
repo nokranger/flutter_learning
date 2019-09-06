@@ -63,15 +63,18 @@ class _VgaPageState extends State<VgaPage> {
           allVgas.add(vga);
         }
       });
+      vgaFilter.allBrands = allVgas.map((v) => v.vgaBrand).toSet();
+      vgaFilter.selectedBrands = allVgas.map((v) => v.vgaBrand).toSet();
     });
+    filterAction();
   }
 
   filterAction() {
     setState(() {
-      vgaFilter.allBrands = allVgas.map((v) => v.vgaBrand).toSet();
-      vgaFilter.selectedBrands = allVgas.map((v) => v.vgaBrand).toSet();
+      // vgaFilter.allBrands = allVgas.map((v) => v.vgaBrand).toSet();
+      // vgaFilter.selectedBrands = allVgas.map((v) => v.vgaBrand).toSet();
       // Set<String> selectedBrands;
-      print(vgaFilter.allBrands.toList()..sort());
+      // print(vgaFilter.allBrands.toList()..sort());
       filteredVgas.clear();
       // vgaFilter.selectedBrands.remove('GIGABYTE');
       allVgas.forEach((v) {
@@ -212,8 +215,16 @@ class _VgaPageState extends State<VgaPage> {
             builder: (context) => VgaFilterPage(
                   vgaFilter: vgaFilter,
                 )));
-    print('out');
-    // print(result.vgaBrands);
+    // print('out');
+    // print(result.selectedBrands);
+    if (result != null) {
+      setState(() {
+        vgaFilter.selectedBrands = result.selectedBrands;
+      });
+      filterAction();
+    }else {
+      filterAction();
+    }
   }
 
   Widget bodyBuilder() {
@@ -221,35 +232,38 @@ class _VgaPageState extends State<VgaPage> {
       itemCount: filteredVgas.length,
       itemBuilder: (context, i) {
         var v = filteredVgas[i];
-        return GestureDetector(
-            onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => VgaDetailPage(),
-                )),
-            child: Row(
-              children: <Widget>[
-                Container(
-                  margin: EdgeInsets.all(8),
-                  height: 150,
-                  width: 150,
-                  child: CachedNetworkImage(
-                    imageUrl:
-                        "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
-                    // placeholder: (context, url) =>
-                    //     CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => Icon(Icons.error),
+        return Card(
+          elevation: 0,
+          child: InkWell(
+              onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VgaDetailPage(),
+                  )),
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    margin: EdgeInsets.all(8),
+                    height: 150,
+                    width: 150,
+                    child: CachedNetworkImage(
+                      imageUrl:
+                          "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
+                      // placeholder: (context, url) =>
+                      //     CircularProgressIndicator(),
+                      errorWidget: (context, url, error) => Icon(Icons.error),
+                    ),
                   ),
-                ),
-                Column(
-                  children: <Widget>[
-                    Text('${v.vgaModel}'),
-                    Text('${v.vgaBrand}'),
-                    Text('${v.vgaPriceAdv} บาท')
-                  ],
-                ),
-              ],
-            ));
+                  Column(
+                    children: <Widget>[
+                      Text('${v.vgaModel}'),
+                      Text('${v.vgaBrand}'),
+                      Text('${v.vgaPriceAdv} บาท')
+                    ],
+                  ),
+                ],
+              )),
+        );
       },
     );
   }
