@@ -22,6 +22,7 @@ class VgaPage extends StatefulWidget {
 class _VgaPageState extends State<VgaPage> {
   List<Vga> allVgas = [];
   List<Vga> filteredVgas = [];
+  Sort sort = Sort.latest;
 
   String sortBy = 'latest'; //lates  low2high high2low
   // BuildContext _scaffoldContext; //snackbar
@@ -56,7 +57,7 @@ class _VgaPageState extends State<VgaPage> {
     // TODO: implement initState
     super.initState();
     loadData();
-    filterAction();
+    // doFilter();
   }
 
   loadData() async {
@@ -73,14 +74,16 @@ class _VgaPageState extends State<VgaPage> {
         }
       });
     });
-    filterAction();
+    doFilter();
   }
 
-  filterAction() {
-    filteredVgas = filter.filters(allVgas);
+  doFilter() {
+    setState(() {
+      filteredVgas = filter.filters(allVgas);
+    });
   }
 
-  sort(Sort sort) {
+  doSort(Sort sort) {
     setState(() {
       if (sort == Sort.lowPrice) {
         filteredVgas.sort((a, b) {
@@ -161,14 +164,6 @@ class _VgaPageState extends State<VgaPage> {
         key: _scaffoldKey,
         title: Text('PC Build'),
         actions: <Widget>[
-          // IconButton(
-          //   icon: Icon(Icons.refresh),
-          //   tooltip: 'Refresh',
-          //   onPressed: () {
-          //     filterAction();
-          //   },
-          // ),
-          // dropdownWidget(),
           IconButton(
             icon: Icon(Icons.tune),
             tooltip: 'Filter',
@@ -185,8 +180,13 @@ class _VgaPageState extends State<VgaPage> {
           ),
           // dropdownWidget(),
           PopupMenuButton(
-            onSelected: (v) => (v),
-            icon: Icon(Icons.sort),
+            onSelected: (v) => doSort(v),
+            // icon: Icon(Icons.sort),
+            icon: sort == Sort.highPrice
+                ? Icon(Icons.arrow_upward)
+                : sort == Sort.lowPrice
+                    ? Icon(Icons.arrow_downward)
+                    : Icon(Icons.sort),
             itemBuilder: (context) {
               return [
                 PopupMenuItem(
@@ -194,11 +194,11 @@ class _VgaPageState extends State<VgaPage> {
                   value: Sort.latest,
                 ),
                 PopupMenuItem(
-                  child: Text('Low Price'),
+                  child: Text('Low price'),
                   value: Sort.lowPrice,
                 ),
                 PopupMenuItem(
-                  child: Text('High Price'),
+                  child: Text('High price'),
                   value: Sort.highPrice,
                 ),
               ];
@@ -223,9 +223,7 @@ class _VgaPageState extends State<VgaPage> {
       setState(() {
         filter = result;
       });
-      filterAction();
-    } else {
-      filterAction();
+       doFilter();
     }
   }
 
@@ -250,6 +248,7 @@ class _VgaPageState extends State<VgaPage> {
                     height: 100,
                     width: 100,
                     child: CachedNetworkImage(
+                      fit: BoxFit.cover,
                       imageUrl:
                           "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
                       // placeholder: (context, url) =>
@@ -257,13 +256,36 @@ class _VgaPageState extends State<VgaPage> {
                       errorWidget: (context, url, error) => Icon(Icons.error),
                     ),
                   ),
-                  Container(
-                    padding: EdgeInsets.all(8),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
                     child: Column(
                       children: <Widget>[
-                        Text('${v.vgaModel}'),
-                        Text('${v.vgaBrand}'),
-                        Text('${v.vgaPriceAdv} บาท')
+                        SizedBox(
+                            width: 200.0,
+                            child: Text(
+                              'รุ่น : ${v.vgaModel}',
+                              style: TextStyle(fontSize: 15),
+                            )),
+                        SizedBox(
+                            width: 200.0,
+                            child: Text(
+                              'ยี่ห้อ : ${v.vgaBrand}',
+                              style: TextStyle(fontSize: 15),
+                            )),
+                        SizedBox(
+                            width: 200.0,
+                            child: Text(
+                              'ราคา : ${v.vgaPriceAdv} บาท',
+                              style: TextStyle(fontSize: 15),
+                            )),
+                        // Text(
+                        //   '${v.vgaBrand}',
+                        //   style: TextStyle(fontSize: 15),
+                        // ),
+                        // Text(
+                        //   '${v.vgaPriceAdv} บาท',
+                        //   style: TextStyle(fontSize: 15),
+                        // )
                       ],
                     ),
                   ),
