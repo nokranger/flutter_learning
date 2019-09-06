@@ -1,9 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_range_slider/flutter_range_slider.dart' as frs;
+
 import 'package:pc_build/models/vga.dart';
 
+// class RangeSliderSample extends StatefulWidget {
+//   @override
+//   _RangeSliderSampleState createState() => _RangeSliderSampleState();
+// }
+
+// class _RangeSliderSampleState extends State<RangeSliderSample> {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+      
+//     );
+//   }
+// }
+
 class VgaFilterPage extends StatefulWidget {
-  final List<Vga> allVgas;
   final VgaFilter selectedFilter;
+  final List<Vga> allVgas;
 
   VgaFilterPage({Key key, this.selectedFilter, this.allVgas}) : super(key: key);
 
@@ -19,8 +35,6 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
   @override
   void initState() {
     super.initState();
-    // allFilter = widget.allVgas;
-    // selectedFilter = widget.selectedFilter;
     initData();
   }
 
@@ -28,6 +42,10 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
     allFilter = VgaFilter.fromVgas(widget.allVgas);
     validFilter = allFilter;
     selectedFilter = widget.selectedFilter;
+    if (selectedFilter.maxPrice > allFilter.maxPrice)
+      selectedFilter.maxPrice = allFilter.maxPrice;
+    if (selectedFilter.minPrice < allFilter.minPrice)
+      selectedFilter.minPrice = allFilter.minPrice;
     recalFilter();
   }
 
@@ -36,6 +54,8 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
       allFilter = VgaFilter.fromVgas(widget.allVgas);
       validFilter = allFilter;
       selectedFilter = VgaFilter();
+      selectedFilter.minPrice = allFilter.minPrice;
+      selectedFilter.maxPrice = allFilter.maxPrice;
     });
   }
 
@@ -44,16 +64,25 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
       validFilter = VgaFilter.clone(allFilter);
       var tmpFilter = VgaFilter.clone(allFilter);
 
-      //caclulate valid chipset
-      tmpFilter.vgaBrand =
-          allFilter.vgaBrand.intersection(selectedFilter.vgaBrand);
+      //calculate valid by price
+      tmpFilter.minPrice = selectedFilter.minPrice;
+      tmpFilter.maxPrice = selectedFilter.maxPrice;
       var tmpVgas = tmpFilter.filters(widget.allVgas);
       var resultFilter = VgaFilter.fromVgas(tmpVgas);
+      validFilter.vgaBrand = resultFilter.vgaBrand;
+      selectedFilter.vgaBrand =
+          selectedFilter.vgaBrand.intersection(validFilter.vgaBrand);
+
+      //caclulate valid by brand
+      tmpFilter.vgaBrand =
+          allFilter.vgaBrand.intersection(selectedFilter.vgaBrand);
+      tmpVgas = tmpFilter.filters(widget.allVgas);
+      resultFilter = VgaFilter.fromVgas(tmpVgas);
       validFilter.vgaChipset = resultFilter.vgaChipset;
       selectedFilter.vgaChipset =
           selectedFilter.vgaChipset.intersection(validFilter.vgaChipset);
 
-      //caclulate valid series
+      //caclulate valid by chipset
       tmpFilter.vgaChipset =
           allFilter.vgaChipset.intersection(selectedFilter.vgaChipset);
       tmpVgas = tmpFilter.filters(widget.allVgas);
@@ -88,6 +117,27 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
       body: ListView(
         children: <Widget>[
           ListTile(
+            title: Text('ราคา'),
+            trailing: Text(
+                '${selectedFilter.minPrice}-${selectedFilter.maxPrice} บาท'),
+          ),
+          frs.RangeSlider(
+              min: allFilter.minPrice.toDouble(),
+              max: allFilter.maxPrice.toDouble(),
+              lowerValue: selectedFilter.minPrice.toDouble(),
+              upperValue: selectedFilter.maxPrice.toDouble(),
+              divisions: 20,
+              showValueIndicator: true,
+              valueIndicatorMaxDecimals: 0,
+              onChanged: (l, u) {
+                setState(() {
+                  selectedFilter.minPrice = l.toInt();
+                  selectedFilter.maxPrice = u.toInt();
+                  recalFilter();
+                });
+              },
+              ),
+          ListTile(
             title: Text('Brands'),
             trailing: clearAllMaker(selectedFilter.vgaBrand),
           ),
@@ -104,7 +154,8 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
             trailing: clearAllMaker(selectedFilter.vgaSeries),
           ),
           filterChipMaker(allFilter.vgaSeries, validFilter.vgaSeries,
-              selectedFilter.vgaSeries),
+              selectedFilter.vgaSeries,
+              showInvalid: false),
         ],
       ),
     );
@@ -112,7 +163,7 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
 
   Widget clearAllMaker(Set<String> selected) {
     return FlatButton(
-      child: Text('clear all'),
+      child: Text('clear'),
       onPressed: selected.length == 0
           ? null
           : () {
@@ -124,33 +175,35 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
     );
   }
 
-  Widget filterChipMaker(Set<String> all, Set<String> valid, Set<String> s) {
+  Widget filterChipMaker(
+      Set<String> all, Set<String> valid, Set<String> selected,
+      {bool showInvalid = true}) {
     List<String> allList = all.toList()..sort();
-    return Wrap(
-      children: allList.map((b) {
-        return Container(
-          margin: EdgeInsets.fromLTRB(2, 0, 2, 0),
-          child: FilterChip(
+    if (!showInvalid) allList.removeWhere((v) => !valid.contains(v));
+    return Container(
+      margin: EdgeInsets.fromLTRB(8, 0, 8, 8),
+      child: Wrap(
+        children: allList.map((b) {
+          return FilterChip(
             avatar: Text(' '),
             label: Text(b),
-            selected: s.contains(b),
-            // disabledColor: Colors.black,
+            selected: selected.contains(b),
             onSelected: !valid.contains(b)
                 ? null
                 : (bool sel) {
                     setState(() {
                       if (sel) {
-                        s.add(b);
+                        selected.add(b);
                         recalFilter();
                       } else {
-                        s.remove(b);
+                        selected.remove(b);
                         recalFilter();
                       }
                     });
                   },
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

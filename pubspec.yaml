@@ -25,6 +25,7 @@ dependencies:
   cupertino_icons: ^0.1.2
   cached_network_image: ^1.1.1
   flutter_cache_store: ^0.6.0
+  flutter_range_slider: "^1.4.0"
 
 dev_dependencies:
   flutter_test:

@@ -8,6 +8,12 @@ import 'package:pc_build/pages/vga/vga_detail.dart';
 import 'package:pc_build/models/vga.dart';
 import 'package:pc_build/pages/vga/vga_filter.dart';
 
+enum Sort {
+  latest,
+  lowPrice,
+  highPrice,
+}
+
 class VgaPage extends StatefulWidget {
   @override
   _VgaPageState createState() => _VgaPageState();
@@ -66,8 +72,6 @@ class _VgaPageState extends State<VgaPage> {
           allVgas.add(vga);
         }
       });
-      // allFilter = VgaFilter.fromVgas(allVgas);
-      // selectedFilter = VgaFilter.fromVgas(allVgas);
     });
     filterAction();
   }
@@ -76,20 +80,17 @@ class _VgaPageState extends State<VgaPage> {
     filteredVgas = filter.filters(allVgas);
   }
 
-  sortAction() {
+  sort(Sort sort) {
     setState(() {
-      if (sortBy == 'latest') {
-        sortBy = 'low2high';
+      if (sort == Sort.lowPrice) {
         filteredVgas.sort((a, b) {
           return a.vgaPriceAdv - b.vgaPriceAdv;
         });
-      } else if (sortBy == 'low2high') {
-        sortBy = 'high2low';
+      } else if (sort == Sort.highPrice) {
         filteredVgas.sort((a, b) {
           return b.vgaPriceAdv - a.vgaPriceAdv;
         });
       } else {
-        sortBy = 'latest';
         filteredVgas.sort((a, b) {
           return b.id - a.id;
         });
@@ -161,14 +162,6 @@ class _VgaPageState extends State<VgaPage> {
         title: Text('PC Build'),
         actions: <Widget>[
           // IconButton(
-          //   icon: Icon(Icons.sort),
-          //   tooltip: 'Retitch it',
-          //   onPressed: () {
-          //     sortAction();
-          //     showMessage(sortBy);
-          //   },
-          // )
-          // IconButton(
           //   icon: Icon(Icons.refresh),
           //   tooltip: 'Refresh',
           //   onPressed: () {
@@ -190,7 +183,27 @@ class _VgaPageState extends State<VgaPage> {
               navigate2filterPage(context);
             },
           ),
-          dropdownWidget(),
+          // dropdownWidget(),
+          PopupMenuButton(
+            onSelected: (v) => (v),
+            icon: Icon(Icons.sort),
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem(
+                  child: Text('Latest'),
+                  value: Sort.latest,
+                ),
+                PopupMenuItem(
+                  child: Text('Low Price'),
+                  value: Sort.lowPrice,
+                ),
+                PopupMenuItem(
+                  child: Text('High Price'),
+                  value: Sort.highPrice,
+                ),
+              ];
+            },
+          ),
         ],
       ),
       body: bodyBuilder(),
@@ -202,10 +215,8 @@ class _VgaPageState extends State<VgaPage> {
     VgaFilter result = await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => VgaFilterPage(
-                  selectedFilter: filter,
-                  allVgas: allVgas
-                )));
+            builder: (context) =>
+                VgaFilterPage(selectedFilter: filter, allVgas: allVgas)));
     // print('out');
     // print(result.selectedBrands);
     if (result != null) {
