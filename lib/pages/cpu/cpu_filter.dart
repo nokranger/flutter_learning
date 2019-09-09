@@ -1,36 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_range_slider/flutter_range_slider.dart' as frs;
 
-import 'package:pc_build/models/vga.dart';
+import 'package:pc_build/models/cpu.dart';
 
-// class RangeSliderSample extends StatefulWidget {
-//   @override
-//   _RangeSliderSampleState createState() => _RangeSliderSampleState();
-// }
+class CpuFilterPage extends StatefulWidget {
+  final CpuFilter selectedFilter;
+  final List<Cpu> allCpus;
 
-// class _RangeSliderSampleState extends State<RangeSliderSample> {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-      
-//     );
-//   }
-// }
-
-class VgaFilterPage extends StatefulWidget {
-  final VgaFilter selectedFilter;
-  final List<Vga> allVgas;
-
-  VgaFilterPage({Key key, this.selectedFilter, this.allVgas}) : super(key: key);
+  CpuFilterPage({Key key, this.selectedFilter, this.allCpus}) : super(key: key);
 
   @override
-  _VgaFilterPageState createState() => _VgaFilterPageState();
+  _CpuFilterPageState createState() => _CpuFilterPageState();
 }
 
-class _VgaFilterPageState extends State<VgaFilterPage> {
-  VgaFilter allFilter;
-  VgaFilter validFilter;
-  VgaFilter selectedFilter;
+class _CpuFilterPageState extends State<CpuFilterPage> {
+  CpuFilter allFilter;
+  CpuFilter validFilter;
+  CpuFilter selectedFilter;
 
   @override
   void initState() {
@@ -39,7 +25,7 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
   }
 
   initData() {
-    allFilter = VgaFilter.fromVgas(widget.allVgas);
+    allFilter = CpuFilter.fromVgas(widget.allCpus);
     validFilter = allFilter;
     selectedFilter = widget.selectedFilter;
     if (selectedFilter.maxPrice > allFilter.maxPrice)
@@ -51,9 +37,9 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
 
   resetData() {
     setState(() {
-      allFilter = VgaFilter.fromVgas(widget.allVgas);
+      allFilter = CpuFilter.fromVgas(widget.allCpus);
       validFilter = allFilter;
-      selectedFilter = VgaFilter();
+      selectedFilter = CpuFilter();
       selectedFilter.minPrice = allFilter.minPrice;
       selectedFilter.maxPrice = allFilter.maxPrice;
     });
@@ -61,14 +47,14 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
 
   recalFilter() {
     setState(() {
-      validFilter = VgaFilter.clone(allFilter);
-      var tmpFilter = VgaFilter.clone(allFilter);
+      validFilter = CpuFilter.clone(allFilter);
+      var tmpFilter = CpuFilter.clone(allFilter);
 
       //calculate valid by price
       tmpFilter.minPrice = selectedFilter.minPrice;
       tmpFilter.maxPrice = selectedFilter.maxPrice;
-      var tmpVgas = tmpFilter.filters(widget.allVgas);
-      var resultFilter = VgaFilter.fromVgas(tmpVgas);
+      var tmpVgas = tmpFilter.filters(widget.allCpus);
+      var resultFilter = CpuFilter.fromVgas(tmpVgas);
       validFilter.vgaBrand = resultFilter.vgaBrand;
       selectedFilter.vgaBrand =
           selectedFilter.vgaBrand.intersection(validFilter.vgaBrand);
@@ -76,8 +62,8 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
       //caclulate valid by brand
       tmpFilter.vgaBrand =
           allFilter.vgaBrand.intersection(selectedFilter.vgaBrand);
-      tmpVgas = tmpFilter.filters(widget.allVgas);
-      resultFilter = VgaFilter.fromVgas(tmpVgas);
+      tmpVgas = tmpFilter.filters(widget.allCpus);
+      resultFilter = CpuFilter.fromVgas(tmpVgas);
       validFilter.vgaChipset = resultFilter.vgaChipset;
       selectedFilter.vgaChipset =
           selectedFilter.vgaChipset.intersection(validFilter.vgaChipset);
@@ -85,8 +71,8 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
       //caclulate valid by chipset
       tmpFilter.vgaChipset =
           allFilter.vgaChipset.intersection(selectedFilter.vgaChipset);
-      tmpVgas = tmpFilter.filters(widget.allVgas);
-      resultFilter = VgaFilter.fromVgas(tmpVgas);
+      tmpVgas = tmpFilter.filters(widget.allCpus);
+      resultFilter = CpuFilter.fromVgas(tmpVgas);
       validFilter.vgaSeries = resultFilter.vgaSeries;
       selectedFilter.vgaSeries =
           selectedFilter.vgaSeries.intersection(validFilter.vgaSeries);
@@ -122,21 +108,21 @@ class _VgaFilterPageState extends State<VgaFilterPage> {
                 '${selectedFilter.minPrice}-${selectedFilter.maxPrice} บาท'),
           ),
           frs.RangeSlider(
-              min: allFilter.minPrice.toDouble(),
-              max: allFilter.maxPrice.toDouble(),
-              lowerValue: selectedFilter.minPrice.toDouble(),
-              upperValue: selectedFilter.maxPrice.toDouble(),
-              divisions: 20,
-              showValueIndicator: true,
-              valueIndicatorMaxDecimals: 0,
-              onChanged: (l, u) {
-                setState(() {
-                  selectedFilter.minPrice = l.toInt();
-                  selectedFilter.maxPrice = u.toInt();
-                  recalFilter();
-                });
-              },
-              ),
+            min: allFilter.minPrice.toDouble(),
+            max: allFilter.maxPrice.toDouble(),
+            lowerValue: selectedFilter.minPrice.toDouble(),
+            upperValue: selectedFilter.maxPrice.toDouble(),
+            divisions: 20,
+            showValueIndicator: true,
+            valueIndicatorMaxDecimals: 0,
+            onChanged: (l, u) {
+              setState(() {
+                selectedFilter.minPrice = l.toInt();
+                selectedFilter.maxPrice = u.toInt();
+                recalFilter();
+              });
+            },
+          ),
           ListTile(
             title: Text('Brands'),
             trailing: clearAllMaker(selectedFilter.vgaBrand),

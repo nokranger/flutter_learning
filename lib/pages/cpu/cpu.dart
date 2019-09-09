@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
-import 'dart:io';
 import 'dart:convert';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_cache_store/flutter_cache_store.dart';
+import 'dart:io';
 
-import 'vga_detail.dart';
-import 'vga_filter.dart';
-import 'package:pc_build/models/vga.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_cache_store/flutter_cache_store.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:pc_build/models/cpu.dart';
+import 'cpu_detail.dart';
+import 'cpu_filter.dart';
 
 enum Sort {
   latest,
@@ -14,23 +15,24 @@ enum Sort {
   highPrice,
 }
 
-class VgaPage extends StatefulWidget {
+class CpuPage extends StatefulWidget {
   @override
-  _VgaPageState createState() => _VgaPageState();
+  _CpuPageState createState() => _CpuPageState();
 }
 
-class _VgaPageState extends State<VgaPage> {
-  List<Vga> allVgas = [];
-  List<Vga> filteredVgas = [];
+class _CpuPageState extends State<CpuPage> {
+  List<Cpu> allCpus = [];
+  List<Cpu> filteredCpus = [];
   Sort sort = Sort.latest;
 
   final _scaffoldKey = GlobalKey<ScaffoldState>();
-  VgaFilter vgaFilter = VgaFilter();
+
+  CpuFilter filter = CpuFilter();
+
   TextEditingController searchController = new TextEditingController();
   String searchString = '';
   String lastSearchString = '';
   bool showSearch = false;
-  VgaFilter filter = VgaFilter();
 
   @override
   void initState() {
@@ -53,15 +55,14 @@ class _VgaPageState extends State<VgaPage> {
   }
 
   loadData() async {
-    var url = 'https://www.advice.co.th/pc/get_comp/vga';
     final store = await CacheStore.getInstance();
-    File file = await store.getFile(url);
+    File file = await store.getFile('https://www.advice.co.th/pc/get_comp/vga');
     final jsonString = json.decode(file.readAsStringSync());
     setState(() {
       jsonString.forEach((v) {
-        final vga = Vga.fromJson(v);
+        final vga = Cpu.fromJson(v);
         if (vga.advId != '' && vga.vgaPriceAdv != 0) {
-          allVgas.add(vga);
+          allCpus.add(vga);
         }
       });
     });
@@ -70,9 +71,9 @@ class _VgaPageState extends State<VgaPage> {
 
   doFilter() {
     setState(() {
-      filteredVgas = filter.filters(allVgas);
+      filteredCpus = filter.filters(allCpus);
       if (searchString != '')
-        filteredVgas = filteredVgas.where((v) {
+        filteredCpus = filteredCpus.where((v) {
           if (v.vgaBrand.toLowerCase().contains(searchString.toLowerCase()))
             return true;
           if (v.vgaModel.toLowerCase().contains(searchString.toLowerCase()))
@@ -80,20 +81,22 @@ class _VgaPageState extends State<VgaPage> {
           return false;
         }).toList();
     });
+    doSort(sort);
   }
 
-  doSort(Sort sort) {
+  doSort(Sort s) {
     setState(() {
+      sort = s;
       if (sort == Sort.lowPrice) {
-        filteredVgas.sort((a, b) {
+        filteredCpus.sort((a, b) {
           return a.vgaPriceAdv - b.vgaPriceAdv;
         });
       } else if (sort == Sort.highPrice) {
-        filteredVgas.sort((a, b) {
+        filteredCpus.sort((a, b) {
           return b.vgaPriceAdv - a.vgaPriceAdv;
         });
       } else {
-        filteredVgas.sort((a, b) {
+        filteredCpus.sort((a, b) {
           return b.id - a.id;
         });
       }
@@ -110,6 +113,7 @@ class _VgaPageState extends State<VgaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: appBarBuilder(context),
       body: bodyBuilder(),
     );
@@ -117,12 +121,11 @@ class _VgaPageState extends State<VgaPage> {
 
   AppBar appBarBuilder(BuildContext context) {
     return AppBar(
-      key: _scaffoldKey,
-      title: Text('VGA'),
+      title: Text('CPU'),
       actions: <Widget>[
         IconButton(
           icon: Icon(Icons.search),
-          tooltip: 'Serach',
+          tooltip: 'Search',
           onPressed: () {
             setState(() {
               showSearch = !showSearch;
@@ -144,6 +147,7 @@ class _VgaPageState extends State<VgaPage> {
         ),
         PopupMenuButton(
           onSelected: (v) => doSort(v),
+          // icon: Icon(Icons.sort),
           icon: sort == Sort.highPrice
               ? Icon(Icons.arrow_upward)
               : sort == Sort.lowPrice
@@ -171,11 +175,13 @@ class _VgaPageState extends State<VgaPage> {
   }
 
   navigate2filterPage(BuildContext context) async {
-    VgaFilter result = await Navigator.push(
+    CpuFilter result = await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) =>
-                VgaFilterPage(selectedFilter: filter, allVgas: allVgas)));
+            builder: (context) => CpuFilterPage(
+                  selectedFilter: filter,
+                  allCpus: allCpus,
+                )));
     if (result != null) {
       setState(() {
         filter = result;
@@ -202,9 +208,9 @@ class _VgaPageState extends State<VgaPage> {
 
   Widget listBuilder() {
     return ListView.builder(
-      itemCount: filteredVgas.length,
+      itemCount: filteredCpus.length,
       itemBuilder: (context, i) {
-        var v = filteredVgas[i];
+        var v = filteredCpus[i];
         return Card(
           elevation: 0,
           child: Container(
@@ -212,7 +218,7 @@ class _VgaPageState extends State<VgaPage> {
               onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => VgaDetailPage(),
+                    builder: (context) => CpuDetailPage(cpu: v),
                   )),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -222,10 +228,7 @@ class _VgaPageState extends State<VgaPage> {
                     width: 100,
                     child: CachedNetworkImage(
                       imageUrl:
-                          "https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}",
-                      // placeholder: (context, url) =>
-                      //     CircularProgressIndicator(),
-                      errorWidget: (context, url, error) => Icon(Icons.error),
+                          'https://www.advice.co.th/pic-pc/vga/${v.vgaPicture}',
                     ),
                   ),
                   Expanded(
@@ -234,9 +237,9 @@ class _VgaPageState extends State<VgaPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text('ยี่ห้อ : ${v.vgaBrand}'),
-                          Text('รุ่น : ${v.vgaModel}'),
-                          Text('ราคา : ${v.vgaPriceAdv} บาท'),
+                          Text('${v.vgaBrand}'),
+                          Text('${v.vgaModel}'),
+                          Text('${v.vgaPriceAdv} บาท'),
                         ],
                       ),
                     ),
